@@ -1,0 +1,43 @@
+# Contributor: Lucas Mierzwa <lucas@mierzwa.cc>
+# Maintainer: Someone <someone@alpinelinux.or>
+pkgname=php7-phalcon
+_pkgreal=phalcon
+pkgver=3.0.3
+pkgrel=0
+pkgdesc="PHP extension that provides web framework delivered as a C-extension"
+url="https://github.com/$_pkgreal/c$_pkgreal"
+arch="all"
+license="PHP"
+depends="php7-pdo php7-json"
+makedepends="php7-dev autoconf re2c pcre-dev"
+install=""
+subpackages=""
+source="https://github.com/$_pkgreal/c$_pkgreal/archive/v$pkgver.zip"
+
+_builddir="$srcdir"/c$_pkgreal-$pkgver/build
+
+prepare() {
+        cd "$_builddir"
+        local bits=$(echo '#include <limits.h>' | ${CC:-gcc} -dM -E - | awk '$2 == "LONG_BIT" {print $3}')
+        ln -s php7/${bits}bits arch
+}
+
+build() {
+        cd "$_builddir"/arch
+        phpize || return 1
+        ./configure --prefix=/usr || return 1
+        make || return 1
+}
+
+package() {
+        cd "$_builddir"/arch
+        make INSTALL_ROOT="$pkgdir"/ install || return 1
+        install -d "$pkgdir"/etc/php7/conf.d || return 1
+        echo "extension=$_pkgreal.so" > "$pkgdir"/etc/php7/conf.d/$_pkgreal.ini
+        [ -d "$pkgdir"/usr/include ] && rm -fr "$pkgdir"/usr/include
+        return 0
+}
+
+md5sums="fefab25024d813076be8465e9914a222  v3.0.3.zip"
+sha256sums="aee7b8e44faa2b13747577c4d46d13ca66b2b8554995bdaf5c175eae87297721  v3.0.3.zip"
+sha512sums="39e0364d70962d770539d7307aa39d96e8ff2c078f4f54b01ba36ebe4a3380e8f345f7eaddd58bd464ec4ec32ab424effe764f82b5fccdbbb77fea607898d2ac  v3.0.3.zip"
